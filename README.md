@@ -28,3 +28,88 @@ Follow these steps to set up the EndoCancerVision project:
    ```bash
    git clone https://github.com/Joymutheu-dev/Endometrialcancerdetectionsystem.git
    cd Endometrialcancerdetectionsystem
+
+2. **Install Python Dependencies**:
+   Ensure Python 3.8+ is installed, then install required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+   The `requirements.txt` includes:
+   ```
+   tensorflow==2.12.0
+   numpy==1.24.3
+   opencv-python==4.8.0
+   scikit-image==0.20.0
+   matplotlib==3.7.2
+   openslide-python==1.3.1
+   scipy==1.10.1
+   pandas==2.0.3
+   h5py==3.9.0
+   graphviz==0.20.1
+   ```
+
+3. **Install Graphviz for Flowchart Visualization**:
+   - Install the Graphviz software:
+     - **Windows**: Download from https://graphviz.org/download/ and add to PATH.
+     - **macOS**: `brew install graphviz`
+     - **Linux**: `sudo apt-get install graphviz`
+   - This is required for generating the pipeline flowchart (`scripts/visualize_pipeline.py`).
+
+4. **Prepare Dataset**:
+   - Place H&E-stained WSI files (e.g., `.svs` format) in the `data/` folder.
+   - Organize processed and segmented images in subfolders: `data/processed/` and `data/segmented/`.
+   - For classification, create subfolders `data/segmented/normal/`, `data/segmented/hyperplasia/`, and `data/segmented/adenocarcinoma/` with labeled `.png` images.
+   - Recommended dataset: TCGA-UCEC (https://portal.gdc.cancer.gov/) or institutional datasets with ethical approval.
+
+5. **Create Output Directories**:
+   ```bash
+   mkdir -p data/processed data/segmented docs models
+   ```
+
+## Usage
+The pipeline processes WSIs through preprocessing, segmentation, training, evaluation, and visualization. Below are the instructions to run each component.
+
+### Instructions to Run
+1. **Preprocess WSIs**:
+   Normalize, denoise, and enhance H&E-stained WSIs:
+   ```bash
+   python scripts/preprocess.py --input data/ --output data/processed/
+   ```
+   - **Input**: Directory with `.svs` WSI files.
+   - **Output**: Processed `.png` images saved in `data/processed/`.
+
+2. **Segment Images**:
+   Apply Otsu thresholding, morphological operations, and watershed algorithm:
+   ```bash
+   python scripts/segment.py --input data/processed/ --output data/segmented/
+   ```
+   - **Input**: Directory with processed `.png` images.
+   - **Output**: Segmented images saved in `data/segmented/`.
+
+3. **Train the Model**:
+   Train the gated MLP model on segmented images:
+   ```bash
+   python scripts/train.py --data data/segmented/ --model models/saved_model.h5
+   ```
+   - **Input**: Directory with subfolders for each class (`normal/`, `hyperplasia/`, `adenocarcinoma/`).
+   - **Output**: Trained model saved as `models/saved_model.h5`.
+
+4. **Evaluate the Model**:
+   Assess model performance on test data:
+   ```bash
+   python scripts/evaluate.py --model models/saved_model.h5 --data data/segmented/
+   ```
+   - **Input**: Trained model and test data directory.
+   - **Output**: Prints classification report and confusion matrix.
+
+5. **Visualize Predictions**:
+   Generate heatmaps for interpretable predictions:
+   ```bash
+   python scripts/visualize.py --model models/saved_model.h5 --image data/segmented/sample.png
+   ```
+   - **Input**: Trained model and a segmented image.
+   - **Output**: Saves `prediction_heatmap.png` with the original image and heatmap overlay.
+
+
+
+
